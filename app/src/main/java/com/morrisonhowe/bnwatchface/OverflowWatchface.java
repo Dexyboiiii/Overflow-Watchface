@@ -31,8 +31,6 @@ import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import static java.lang.Math.pow;
-
 /**
  * Analog watch face with a ticking second hand. In ambient mode, the second hand isn't
  * shown. On devices with low-bit ambient mode, the hands are drawn without anti-aliasing in ambient
@@ -45,7 +43,7 @@ import static java.lang.Math.pow;
  * in the Google Watch Face Code Lab:
  * https://codelabs.developers.google.com/codelabs/watchface/index.html#0
  */
-public class MyWatchFace extends CanvasWatchFaceService {
+public class OverflowWatchface extends CanvasWatchFaceService {
 
     /*
      * Updates rate in milliseconds for interactive mode. We update once a second to advance the
@@ -64,15 +62,15 @@ public class MyWatchFace extends CanvasWatchFaceService {
     }
 
     private static class EngineHandler extends Handler {
-        private final WeakReference<MyWatchFace.Engine> mWeakReference;
+        private final WeakReference<OverflowWatchface.Engine> mWeakReference;
 
-        public EngineHandler(MyWatchFace.Engine reference) {
+        public EngineHandler(OverflowWatchface.Engine reference) {
             mWeakReference = new WeakReference<>(reference);
         }
 
         @Override
         public void handleMessage(Message msg) {
-            MyWatchFace.Engine engine = mWeakReference.get();
+            OverflowWatchface.Engine engine = mWeakReference.get();
             if (engine != null) {
                 switch (msg.what) {
                     case MSG_UPDATE_TIME:
@@ -129,7 +127,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
 
-            setWatchFaceStyle(new WatchFaceStyle.Builder(MyWatchFace.this)
+            setWatchFaceStyle(new WatchFaceStyle.Builder(OverflowWatchface.this)
                     .setAcceptsTapEvents(true)
                     .build());
 
@@ -261,7 +259,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 textPaint.setColor(Color.WHITE);
                 textPaint.setShadowLayer(0, 0, 0, 0);
                 textPaint.setTextSize(200);
-                textPaint.setTypeface(buildVariableFont(100));
+                textPaint.setTypeface(buildVariableFont(200));
                 textPaint.setAntiAlias(false);
 
                 variableFontAnimationFrame = 0;
@@ -451,21 +449,21 @@ public class MyWatchFace extends CanvasWatchFaceService {
             digitalTimeFull = digitalHours + digitalMinutes;
 
             // Animating the font weight
-            if (!mAmbient && variableFontAnimationFrame < 20) {
-                interactiveUpdateRateMs = 10;
+            if (!mAmbient && variableFontAnimationFrame < 10) {
+                interactiveUpdateRateMs = 50;
                 variableFontAnimationFrame ++;
                 Log.i("Font Animation Frame: ", String.valueOf(variableFontAnimationFrame));
-                textPaint.setTypeface(buildVariableFont(700f*(variableFontAnimationFrame/20f)));
+                textPaint.setTypeface(buildVariableFont(700f*(variableFontAnimationFrame/10f)+200f));
             } else {
                 interactiveUpdateRateMs = 1000;
             }
 
             // Drawing the digits and outputting the time to the log
             Log.i("textPaint: ", (textPaint.getFontFeatureSettings() + "   " + textPaint.getFontVariationSettings()));
-            canvas.drawText(String.valueOf(digitalTimeFull.charAt(0)), canvas.getWidth()/10f, mCenterY, textPaint);
+            canvas.drawText(String.valueOf(digitalTimeFull.charAt(0)), canvas.getWidth()/7.5f, mCenterY, textPaint);
             canvas.drawText(String.valueOf(digitalTimeFull.charAt(1)), mCenterX, mCenterY, textPaint);
-            canvas.drawText(String.valueOf(digitalTimeFull.charAt(2)), canvas.getWidth()/10f, canvas.getHeight(), textPaint);
-            canvas.drawText(String.valueOf(digitalTimeFull.charAt(3)), mCenterX, canvas.getHeight(), textPaint);
+            canvas.drawText(String.valueOf(digitalTimeFull.charAt(2)), canvas.getWidth()/7.5f, canvas.getHeight()-(canvas.getHeight()/10f), textPaint);
+            canvas.drawText(String.valueOf(digitalTimeFull.charAt(3)), mCenterX, canvas.getHeight()-(canvas.getHeight()/10f), textPaint);
 
 
             /*
@@ -521,7 +519,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
             }
             mRegisteredTimeZoneReceiver = true;
             IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-            MyWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
+            OverflowWatchface.this.registerReceiver(mTimeZoneReceiver, filter);
         }
 
         private void unregisterReceiver() {
@@ -529,7 +527,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 return;
             }
             mRegisteredTimeZoneReceiver = false;
-            MyWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+            OverflowWatchface.this.unregisterReceiver(mTimeZoneReceiver);
         }
 
         /**
